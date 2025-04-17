@@ -1,0 +1,1 @@
+// ensures bot has successfully logged in and is ready to operate
