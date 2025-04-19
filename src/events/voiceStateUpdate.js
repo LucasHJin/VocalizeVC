@@ -1,69 +1,37 @@
-// for when user joins or leaves vc
+const { joinVoiceChannel } = require('@discordjs/voice');
+const { getUserAudio } = require("../helpers/getUserAudio");
 
 const people = [];
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 let connection = null;
 
 module.exports = {
     name: 'voiceStateUpdate',
     once: false,
     execute(client, oldState, newState) {
-        // people leaving and joining
-        if (oldState.channelId !== newState.channelId) {
-            if (newState.channel) { // person joins
-                if (newState.member.user.bot) {
-                    return;
-                }
-
-                const displayName = newState.member.user.username;
-                console.log(`${displayName} joined the voice channel ${newState.channel.name}`);
-
-                const person = people.find(p => p.name === displayName);
-                if (person) {
-                    person.joinTime.push(new Date());
-                } else {
-                    people.push({
-                        name: displayName,
-                        joinTime: [new Date()],
-                        leaveTime: [],
-                        speakingTime: 0,
-                    });
-                }
-                console.log(people);
-            } else { // person leaves
-                if (oldState.member.user.bot) {
-                    return;
-                }
-
-                const displayName = oldState.member.user.username;
-                console.log(`${displayName} left the voice channel ${oldState.channel.name}`);
-
-                const person = people.find(p => p.name === displayName);
-                if (person) {
-                    person.leaveTime.push(new Date());
-                } else {
-                    people.push({
-                        name: displayName,
-                        joinTime: [new Date()],
-                        leaveTime: [new Date()],
-                        speakingTime: 0,
-                    });
-                }
-                console.log(people);
-                if (oldState.channel.members.size === 0) {
-                    console.log("Call ended");
-                    people.length = 0;
-                }
-            }
+        const user = newState.member?.user || oldState.member?.user;
+        if (!user || user.bot) {
+            return;
         }
 
-        // bot joining (speaking time)
-        if (newState.channel && !oldState.channel) {
-            if (newState.member.user.bot) {
-                return;
-            }
+        // user joining a channel
+        if (oldState.channelId !== newState.channelId && newState.channel) {
+            const displayName = newState.member.user.username;
+            console.log(`${displayName} joined the voice channel ${newState.channel.name}`);
 
-            // create connection only if the bot hasn't already joined
+            const person = people.find(p => p.name === displayName);
+            if (person) {
+                person.joinTime.push(new Date());
+            } else {
+                people.push({
+                    name: displayName,
+                    joinTime: [new Date()],
+                    leaveTime: [],
+                    speakingTime: 0,
+                });
+            }
+            console.log(people);
+
+            // join voice only if not already connected
             if (!connection) {
                 connection = joinVoiceChannel({
                     channelId: newState.channel.id,
@@ -71,41 +39,74 @@ module.exports = {
                     adapterCreator: newState.guild.voiceAdapterCreator,
                 });
 
-                // listen for speaking
+                // speaking started
                 connection.receiver.speaking.on('start', userId => {
-                    const user = newState.guild.members.cache.get(userId);
-                    const displayName = user.user.username;
+                    const member = newState.guild.members.cache.get(userId);
+                    if (!member || member.user.bot) {
+                        return;
+                    }
+                    const displayName = member.user.username;
 
                     const person = people.find(p => p.name === displayName);
                     if (person) {
                         person.speakingStartTime = Date.now();
                     }
 
-                    console.log(`${user.user.username} started speaking`);
+                    console.log(`${displayName} started speaking`);
+
+                    // start recording to get audio
+                    getUserAudio(connection, member);
                 });
 
+                // speaking ended
                 connection.receiver.speaking.on('end', userId => {
-                    const user = newState.guild.members.cache.get(userId);
-                    const displayName = user.user.username;
+                    const member = newState.guild.members.cache.get(userId);
+                    if (!member || member.user.bot) {
+                        return;
+                    }
+                    const displayName = member.user.username;
 
                     const person = people.find(p => p.name === displayName);
                     if (person && person.speakingStartTime) {
                         const speakingDuration = Date.now() - person.speakingStartTime;
                         person.speakingTime += speakingDuration / 1000;
-                        delete person.speakingStartTime; // use instead of global variables because of multiple people in call
+                        delete person.speakingStartTime;
                     }
 
-                    console.log(`${user.user.username} stopped speaking`);
+                    console.log(`${displayName} stopped speaking`);
                 });
             }
         }
 
-        // bot leaves channel
-        if (oldState.channel && !newState.channel) {
-            if (connection) {
-                connection.destroy(); // clean connection
-                connection = null;
+        // user leaving a channel (different channel id and was in old channel before)
+        if (oldState.channelId !== newState.channelId && oldState.channel) {
+            const displayName = oldState.member.user.username;
+            console.log(`${displayName} left the voice channel ${oldState.channel.name}`);
+
+            const person = people.find(p => p.name === displayName);
+            if (person) {
+                person.leaveTime.push(new Date());
+            } else {
+                people.push({
+                    name: displayName,
+                    joinTime: [new Date()],
+                    leaveTime: [new Date()],
+                    speakingTime: 0,
+                });
+            }
+            console.log(people);
+
+            // if channel is now empty
+            if (oldState.channel.members.size === 0) {
+                console.log("Call ended");
+                people.length = 0;
             }
         }
+
+        // bot leaves the channel
+        if (oldState.channel && !newState.channel && connection) {
+            connection.destroy();
+            connection = null;
+        }
     }
-}
+};
