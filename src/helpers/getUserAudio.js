@@ -4,6 +4,7 @@ const fs = require('fs');
 const { spawn } = require('child_process'); // to run ffmpeg (multimedia framework to decode and ecode audio)
 const { PythonShell } = require('python-shell');
 const path = require('path');
+require('dotenv').config();
 
 // MAKE IT DELETE AUDIO RECORDINGS AFTER USING THEM
 
@@ -69,6 +70,7 @@ function callTranscribeAudio(fileName, displayName) {
     
     // run python script to transcribe the audio
     const pyShell = new PythonShell(transcribePath, {
+        pythonPath: process.env.PYTHON_PATH,
         args: [fileName, displayName]
     });
     
