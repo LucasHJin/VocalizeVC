@@ -2,6 +2,10 @@ const { EndBehaviorType } = require('@discordjs/voice');
 const prism = require('prism-media'); // to decode opus foramt
 const fs = require('fs');
 const { spawn } = require('child_process'); // to run ffmpeg (multimedia framework to decode and ecode audio)
+const { PythonShell } = require('python-shell');
+const path = require('path');
+
+// MAKE IT DELETE AUDIO RECORDINGS AFTER USING THEM
 
 function getUserAudio(connection, member) {
     const userId = member.id;
@@ -53,9 +57,20 @@ function getUserAudio(connection, member) {
     ffmpeg.on('close', (code) => {
         if (code === 0) {
             console.log(`Cleaned and saved audio for ${displayName} as ${fileName}`);
+            callTranscribeAudio(fileName, displayName);
         } else {
             console.error(`ffmpeg exited with code ${code}`);
         }
+    });
+}
+
+function callTranscribeAudio(fileName, displayName) {
+    const transcribePath = path.join(__dirname, 'transcribe.py');
+    
+    // run python script to transcribe the audio
+    PythonShell.run(transcribePath, { args: [fileName, displayName] }, (err, results) => {
+        if (err) console.error(err);
+        else console.log("Transcription complete:", results);
     });
 }
 

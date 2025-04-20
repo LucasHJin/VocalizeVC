@@ -5,3 +5,6 @@ A discord bot built to aid meetings.
 1. Discord voice call captions. (shown in gui)
 2. Meeting topic summaries.
 3. Meeting activity summaries. (who joined, how long, what times)
+
+## Virtual env
+- Run source venv/bin/activate + node src/app.js

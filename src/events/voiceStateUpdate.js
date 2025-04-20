@@ -1,6 +1,9 @@
 const { joinVoiceChannel } = require('@discordjs/voice');
 const { getUserAudio } = require("../helpers/getUserAudio");
 
+const fs = require('fs');
+const path = require('path');
+
 const people = [];
 let connection = null;
 
@@ -96,11 +99,25 @@ module.exports = {
             }
             console.log(people);
 
-            // if channel is now empty
-            if (oldState.channel.members.size === 0) {
-                console.log("Call ended");
-                people.length = 0;
-            }
+            // if channel is now empty (small delay to make sure it works)
+            setTimeout(() => {
+                if (oldState.channel.members.size === 0) {
+                    console.log("Call ended");
+                    people.length = 0;
+
+                    const transcriptionPath = path.join(__dirname, '../transcription.txt');
+
+                    console.log(transcriptionPath)
+
+                    fs.writeFile(transcriptionPath, '', (err) => {
+                        if (err) {
+                            console.error("Error clearing transcription file:", err);
+                        } else {
+                            console.log("Transcription file cleared.");
+                        }
+                    });
+                }
+            }, 500);
         }
 
         // bot leaves the channel
