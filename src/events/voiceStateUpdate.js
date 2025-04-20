@@ -16,6 +16,19 @@ module.exports = {
             return;
         }
 
+        if (!oldState.channelId && newState.channelId) {
+            const transcriptionPath = path.join(__dirname, '../transcription.txt');
+            console.log(transcriptionPath)
+
+            fs.writeFile(transcriptionPath, '', (err) => {
+                if (err) {
+                    console.error("Error clearing transcription file:", err);
+                } else {
+                    console.log("Transcription file cleared.");
+                }
+            });
+        }
+
         // user joining a channel
         if (oldState.channelId !== newState.channelId && newState.channel) {
             const displayName = newState.member.user.username;
@@ -106,7 +119,6 @@ module.exports = {
                     people.length = 0;
 
                     const transcriptionPath = path.join(__dirname, '../transcription.txt');
-
                     console.log(transcriptionPath)
 
                     fs.writeFile(transcriptionPath, '', (err) => {

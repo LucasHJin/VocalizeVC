@@ -14,3 +14,4 @@ if __name__ == "__main__":
     audioFile = sys.argv[1]
     speaker = sys.argv[2]
     transcribe(audioFile, speaker)
+    sys.exit(0)

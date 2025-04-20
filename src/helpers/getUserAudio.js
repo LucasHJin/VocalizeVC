@@ -68,9 +68,24 @@ function callTranscribeAudio(fileName, displayName) {
     const transcribePath = path.join(__dirname, 'transcribe.py');
     
     // run python script to transcribe the audio
-    PythonShell.run(transcribePath, { args: [fileName, displayName] }, (err, results) => {
-        if (err) console.error(err);
-        else console.log("Transcription complete:", results);
+    const pyShell = new PythonShell(transcribePath, {
+        args: [fileName, displayName]
+    });
+    
+    // delete the audio file on ending transcription
+    pyShell.end((err, code, signal) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log("Transcription complete, code:", code);
+            fs.unlink(fileName, (unlinkErr) => {
+                if (unlinkErr) {
+                    console.error(`Error deleting audio file ${fileName}:`, unlinkErr);
+                } else {
+                    console.log(`Deleted audio file ${fileName}`);
+                }
+            });
+        }
     });
 }
 
