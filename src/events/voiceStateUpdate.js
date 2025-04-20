@@ -55,6 +55,12 @@ module.exports = {
                     adapterCreator: newState.guild.voiceAdapterCreator,
                 });
 
+                // send message for captions link
+                const channel = newState.guild.channels.cache.get(process.env.CHANNEL_ID);
+                if (channel) {
+                    channel.send(`Captions starting! Join at http://localhost:3005.`);
+                }
+
                 // speaking started
                 connection.receiver.speaking.on('start', userId => {
                     const member = newState.guild.members.cache.get(userId);

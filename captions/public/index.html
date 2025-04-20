@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Captions</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <h1>Live Captions</h1>
+    <div id="captions"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const captionsDiv = document.getElementById("captions");
+
+      // on getting captions, add them to the page
+      socket.on("caption", (text) => {
+        const captionElement = document.createElement("div");
+        captionElement.classList.add("caption");
+        captionElement.textContent = text;
+        captionsDiv.appendChild(captionElement);
+
+        // auto scroll
+        captionsDiv.scrollTop = captionsDiv.scrollHeight;
+      });
+    </script>
+  </body>
+</html>

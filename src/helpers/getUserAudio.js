@@ -6,8 +6,6 @@ const { PythonShell } = require('python-shell');
 const path = require('path');
 require('dotenv').config();
 
-// MAKE IT DELETE AUDIO RECORDINGS AFTER USING THEM
-
 function getUserAudio(connection, member) {
     const userId = member.id;
     const displayName = member.user.username;
@@ -16,7 +14,7 @@ function getUserAudio(connection, member) {
     const opusStream = connection.receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: 1000,
+            duration: 250,
         },
     });
 
