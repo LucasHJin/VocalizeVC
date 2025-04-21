@@ -1,12 +1,12 @@
 const { EndBehaviorType } = require('@discordjs/voice');
 const prism = require('prism-media'); // to decode opus foramt
-const fs = require('fs');
 const { spawn } = require('child_process'); // to run ffmpeg (multimedia framework to decode and ecode audio)
-const { PythonShell } = require('python-shell');
-const path = require('path');
 require('dotenv').config();
 
 const { callTranscribeAudio } = require('./callTranscribeAudio');
+
+// logic:
+    // get OPUS from discord -> convert to raw PCM -> filter + reformat to wav with ffmpeg -> combine into buffer -> send to get transcription
 
 function getUserAudio(connection, member) {
     const userId = member.id;
@@ -17,18 +17,13 @@ function getUserAudio(connection, member) {
     const opusStream = connection.receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: 100,
+            duration: 50,
         },
     });
 
-    if (!fs.existsSync('./recordings')) {
-        fs.mkdirSync('./recordings');
-    }
-    const fileName = `./recordings/audio_${userId}_${Date.now()}.wav`;
-
     // decoder (opus -> raw pcm)
     const decoder = new prism.opus.Decoder({
-        frameSize: 960, 
+        frameSize: 960,
         channels: 1,
         rate: 48000,
     });
@@ -39,15 +34,23 @@ function getUserAudio(connection, member) {
         '-ar', '48000',           // input sample rate: 48000 Hz
         '-ac', '1',               // input audio channels: mono
         '-i', 'pipe:0',           // input comes from standard input (a data stream, not a file)
-        '-af', 'highpass=f=120, lowpass=f=6000, dynaudnorm', // filters: remove very low/high frequencies + normalize audio
+        '-af', 'highpass=f=120, lowpass=f=6000, dynaudnorm, volume=1.4', // filters: remove very low/high frequencies + normalize audio + higher volume
         '-ar', '16000',           // output sample rate: 16000 Hz (good for voice)
         '-ac', '1',               // output channels: mono
-        '-sample_fmt', 's16',     // output format: 16-bit PCM
-        fileName
+        '-sample_fmt', 's16',     // input format: 16-bit PCM
+        '-f', 'wav',              // output format: wav
+        'pipe:1'                  // output goes back to the program (stdout)
     ]);
+
+    const audioChunks = []; // hold pieces of processed data
 
     // audio stream -> decoder -> ffmpeg standard input
     opusStream.pipe(decoder).pipe(ffmpeg.stdin);
+
+    // after getting audio data from ffmpeg -> save in audioChunks
+    ffmpeg.stdout.on('data', (chunk) => {
+        audioChunks.push(chunk);
+    });
 
     opusStream.on('end', () => {
         console.log(`Audio stream ended for ${displayName}`);
@@ -58,8 +61,10 @@ function getUserAudio(connection, member) {
     // ffmpeg process finishes 
     ffmpeg.on('close', (code) => {
         if (code === 0) {
-            console.log(`Cleaned and saved audio for ${displayName} as ${fileName}`);
-            callTranscribeAudio(fileName, displayName, avatar);
+            console.log(`Finished processing audio for ${displayName}`);
+            // combine audio into one buffer (temporary storage area before being played/processed)
+            const audioBuffer = Buffer.concat(audioChunks);
+            callTranscribeAudio(audioBuffer, displayName, avatar);
         } else {
             console.error(`ffmpeg exited with code ${code}`);
         }
