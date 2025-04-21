@@ -1,5 +1,6 @@
 const { joinVoiceChannel } = require('@discordjs/voice');
 const { getUserAudio } = require("../helpers/getUserAudio");
+const { getSummary } = require("../helpers/summarize");
 
 const fs = require('fs');
 const path = require('path');
@@ -130,20 +131,29 @@ module.exports = {
                     const channel = newState.guild.channels.cache.get(process.env.CHANNEL_ID);
                     if (channel) {
                         channel.send({
-                            content: 'Transcription for the call: ',
-                            files: [transcriptionPath],
+                          content: 'Transcription for the call: ',
+                          files: [transcriptionPath],
                         }).then(() => {
-                            console.log('Transcription sent!');
-                            // .then because async
-                            fs.writeFile(transcriptionPath, '', (err) => {
-                                if (err) {
-                                    console.error("Error clearing transcription file:", err);
-                                } else {
-                                    console.log("Transcription file cleared.");
-                                }
-                            });
+                          console.log('Transcription sent!');
+                          return getSummary(transcriptionPath);
+
+                        }).then(summary => {
+                          return channel.send(
+                            `**Meeting summary:**\n${summary}`
+                          );
+                      
+                        }).then(() => {
+                          fs.writeFile(transcriptionPath, '', (err) => {
+                            if (err) {
+                              console.error("Error clearing transcription file:", err);
+                            } else {
+                              console.log("Transcription file cleared.");
+                            }
+                          });
+                      
                         }).catch(console.error);
-                    }
+                      }
+                      
                 }
             }, 500);
         }
