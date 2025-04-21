@@ -1,15 +1,23 @@
-const { joinVoiceChannel } = require('@discordjs/voice');
+const { joinVoiceChannel } = require("@discordjs/voice");
 const { getUserAudio } = require("../helpers/getUserAudio");
 const { getSummary } = require("../helpers/summarize");
+const {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    Events,
+    ComponentType,
+} = require("discord.js");
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const people = [];
 let connection = null;
+let generateSummary = false;
 
 module.exports = {
-    name: 'voiceStateUpdate',
+    name: "voiceStateUpdate",
     once: false,
     execute(client, oldState, newState) {
         const user = newState.member?.user || oldState.member?.user;
@@ -18,10 +26,10 @@ module.exports = {
         }
 
         if (!oldState.channelId && newState.channelId) {
-            const transcriptionPath = path.join(__dirname, '../transcription.txt');
-            console.log(transcriptionPath)
+            const transcriptionPath = path.join(__dirname, "../transcription.txt");
+            console.log(transcriptionPath);
 
-            fs.writeFile(transcriptionPath, '', (err) => {
+            fs.writeFile(transcriptionPath, "", (err) => {
                 if (err) {
                     console.error("Error clearing transcription file:", err);
                 } else {
@@ -33,9 +41,11 @@ module.exports = {
         // user joining a channel
         if (oldState.channelId !== newState.channelId && newState.channel) {
             const displayName = newState.member.user.username;
-            console.log(`${displayName} joined the voice channel ${newState.channel.name}`);
+            console.log(
+                `${displayName} joined the voice channel ${newState.channel.name}`
+            );
 
-            const person = people.find(p => p.name === displayName);
+            const person = people.find((p) => p.name === displayName);
             if (person) {
                 person.joinTime.push(new Date());
             } else {
@@ -57,20 +67,77 @@ module.exports = {
                 });
 
                 // send message for captions link
-                const channel = newState.guild.channels.cache.get(process.env.CHANNEL_ID);
+                const channel = newState.guild.channels.cache.get(
+                    process.env.CHANNEL_ID
+                );
                 if (channel) {
                     channel.send(`Captions starting! Join at http://localhost:3005.`);
+
+                    // yes/no button
+                    const row = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId("yes_summary")
+                            .setLabel("Yes")
+                            .setStyle(ButtonStyle.Success),
+                        new ButtonBuilder()
+                            .setCustomId("no_summary")
+                            .setLabel("No")
+                            .setStyle(ButtonStyle.Danger)
+                    );
+
+                    channel
+                        .send({
+                            content:
+                                "Would you like to generate a meeting summaryfor this call?",
+                            components: [row],
+                        })
+                        .then((sentMessage) => {
+                            const filter = (interaction) => {
+                                return interaction.member.permissions.has("Administrator"); // need admin perms
+                            };
+
+                            const collector = sentMessage.createMessageComponentCollector({
+                                filter,
+                                componentType: ComponentType.Button,
+                                time: 86400,
+                            });
+
+                            collector.on("collect", (interaction) => {
+                                if (interaction.customId === "yes_summary") {
+                                    generateSummary = true;
+                                    interaction.reply({
+                                        content: "Summary generation enabled for this meeting.",
+                                        ephemeral: true,
+                                    });
+                                } else if (interaction.customId === "no_summary") {
+                                    generateSummary = false;
+                                    interaction.reply({
+                                        content: "Summary generation disabled for this meeting.",
+                                        ephemeral: true,
+                                    });
+                                }
+                                collector.stop();
+                            });
+
+                            collector.on("end", (collected) => {
+                                // if no choice chosen -> default to no summary
+                                if (collected.size === 0) {
+                                    generateSummary = false;
+                                }
+                            });
+                        })
+                        .catch(console.error);
                 }
 
                 // speaking started
-                connection.receiver.speaking.on('start', userId => {
+                connection.receiver.speaking.on("start", (userId) => {
                     const member = newState.guild.members.cache.get(userId);
                     if (!member || member.user.bot) {
                         return;
                     }
                     const displayName = member.user.username;
 
-                    const person = people.find(p => p.name === displayName);
+                    const person = people.find((p) => p.name === displayName);
                     if (person) {
                         person.speakingStartTime = Date.now();
                     }
@@ -82,14 +149,14 @@ module.exports = {
                 });
 
                 // speaking ended
-                connection.receiver.speaking.on('end', userId => {
+                connection.receiver.speaking.on("end", (userId) => {
                     const member = newState.guild.members.cache.get(userId);
                     if (!member || member.user.bot) {
                         return;
                     }
                     const displayName = member.user.username;
 
-                    const person = people.find(p => p.name === displayName);
+                    const person = people.find((p) => p.name === displayName);
                     if (person && person.speakingStartTime) {
                         const speakingDuration = Date.now() - person.speakingStartTime;
                         person.speakingTime += speakingDuration / 1000;
@@ -104,9 +171,11 @@ module.exports = {
         // user leaving a channel (different channel id and was in old channel before)
         if (oldState.channelId !== newState.channelId && oldState.channel) {
             const displayName = oldState.member.user.username;
-            console.log(`${displayName} left the voice channel ${oldState.channel.name}`);
+            console.log(
+                `${displayName} left the voice channel ${oldState.channel.name}`
+            );
 
-            const person = people.find(p => p.name === displayName);
+            const person = people.find((p) => p.name === displayName);
             if (person) {
                 person.leaveTime.push(new Date());
             } else {
@@ -121,39 +190,60 @@ module.exports = {
 
             // if channel is now empty (small delay to make sure it works)
             setTimeout(() => {
+                // if empty
                 if (oldState.channel.members.size === 0) {
                     console.log("Call ended");
                     people.length = 0;
 
-                    const transcriptionPath = path.join(__dirname, '../transcription.txt');
-                    console.log(transcriptionPath)
+                    const transcriptionPath = path.join(
+                        __dirname,
+                        "../transcription.txt"
+                    );
+                    console.log(transcriptionPath);
 
-                    const channel = newState.guild.channels.cache.get(process.env.CHANNEL_ID);
+                    const channel = newState.guild.channels.cache.get(
+                        process.env.CHANNEL_ID
+                    );
+
                     if (channel) {
-                        channel.send({
-                          content: 'Transcription for the call: ',
-                          files: [transcriptionPath],
-                        }).then(() => {
-                          console.log('Transcription sent!');
-                          return getSummary(transcriptionPath);
-
-                        }).then(summary => {
-                          return channel.send(
-                            `**Meeting summary:**\n${summary}`
-                          );
-                      
-                        }).then(() => {
-                          fs.writeFile(transcriptionPath, '', (err) => {
-                            if (err) {
-                              console.error("Error clearing transcription file:", err);
-                            } else {
-                              console.log("Transcription file cleared.");
-                            }
-                          });
-                      
-                        }).catch(console.error);
-                      }
-                      
+                        // send transcription txt file
+                        channel
+                            .send({
+                                content: "Transcription for the call: ",
+                                files: [transcriptionPath],
+                            })
+                            .then(() => {
+                                console.log("Transcription sent!");
+                                // if responded yes to generate summary
+                                if (generateSummary) {
+                                    console.log("Generating summary...");
+                                    getSummary(transcriptionPath)
+                                        .then((summary) => {
+                                            return channel.send(`**Meeting summary:**\n${summary}`);
+                                        })
+                                        .then(() => {
+                                            fs.writeFile(transcriptionPath, "", (err) => {
+                                                if (err)
+                                                    console.error(
+                                                        "Error clearing transcription file:",
+                                                        err
+                                                    );
+                                                else console.log("Transcription file cleared.");
+                                            });
+                                        })
+                                        .catch(console.error);
+                                } else {
+                                    // if no to generate summary
+                                    console.log("Summary generation skipped.");
+                                    fs.writeFile(transcriptionPath, "", (err) => {
+                                        if (err)
+                                            console.error("Error clearing transcription file:", err);
+                                        else console.log("Transcription file cleared.");
+                                    });
+                                }
+                                generateSummary = false;
+                            });
+                    }
                 }
             }, 500);
         }
@@ -163,5 +253,5 @@ module.exports = {
             connection.destroy();
             connection = null;
         }
-    }
+    },
 };
