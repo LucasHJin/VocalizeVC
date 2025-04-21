@@ -34,7 +34,7 @@ function getUserAudio(connection, member) {
         '-ar', '48000',           // input sample rate: 48000 Hz
         '-ac', '1',               // input audio channels: mono
         '-i', 'pipe:0',           // input comes from standard input (a data stream, not a file)
-        '-af', 'highpass=f=120, lowpass=f=6000, dynaudnorm, volume=1.4', // filters: remove very low/high frequencies + normalize audio + higher volume
+        '-af', 'highpass=f=120, lowpass=f=6000, dynaudnorm, volume=1.5', // filters: remove very low/high frequencies + normalize audio + higher volume
         '-ar', '16000',           // output sample rate: 16000 Hz (good for voice)
         '-ac', '1',               // output channels: mono
         '-sample_fmt', 's16',     // input format: 16-bit PCM

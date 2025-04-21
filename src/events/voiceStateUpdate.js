@@ -127,13 +127,23 @@ module.exports = {
                     const transcriptionPath = path.join(__dirname, '../transcription.txt');
                     console.log(transcriptionPath)
 
-                    fs.writeFile(transcriptionPath, '', (err) => {
-                        if (err) {
-                            console.error("Error clearing transcription file:", err);
-                        } else {
-                            console.log("Transcription file cleared.");
-                        }
-                    });
+                    const channel = newState.guild.channels.cache.get(process.env.CHANNEL_ID);
+                    if (channel) {
+                        channel.send({
+                            content: 'Transcription for the call: ',
+                            files: [transcriptionPath],
+                        }).then(() => {
+                            console.log('Transcription sent!');
+                            // .then because async
+                            fs.writeFile(transcriptionPath, '', (err) => {
+                                if (err) {
+                                    console.error("Error clearing transcription file:", err);
+                                } else {
+                                    console.log("Transcription file cleared.");
+                                }
+                            });
+                        }).catch(console.error);
+                    }
                 }
             }, 500);
         }
