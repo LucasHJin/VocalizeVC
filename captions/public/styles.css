@@ -1,4 +1,45 @@
 body {
-    background-color: darkgrey;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: rgb(18, 18, 20);
     color: white;
+    font-family: sans-serif;
+}
+  
+h1 {
+    margin: 0.2em;
+    text-align: center;
+}
+  
+#captions {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5em;
+    background: rgb(26, 25, 30);
+    font-weight: 200;
+    font-size: 1.2rem;
+}
+
+#captions .caption {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+#captions .caption .avatar {
+    border-radius: 50%;
+    width: 2.1rem;
+    margin-right: 0.35rem;
+}
+
+#captions .caption span {
+    white-space: normal; 
+    word-wrap: break-word; 
+}
+
+#captions .caption .speaker-name {
+    font-weight: 500;
+    margin: 0.32rem;
 }

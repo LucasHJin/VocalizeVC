@@ -9,12 +9,13 @@ require('dotenv').config();
 function getUserAudio(connection, member) {
     const userId = member.id;
     const displayName = member.user.username;
+    const avatar = member.user.displayAvatarURL({ format: 'png', dynamic: false, size: 256 });
 
     // subscribe to user's audio stream
     const opusStream = connection.receiver.subscribe(userId, {
         end: {
             behavior: EndBehaviorType.AfterSilence,
-            duration: 250,
+            duration: 100,
         },
     });
 
@@ -56,20 +57,20 @@ function getUserAudio(connection, member) {
     ffmpeg.on('close', (code) => {
         if (code === 0) {
             console.log(`Cleaned and saved audio for ${displayName} as ${fileName}`);
-            callTranscribeAudio(fileName, displayName);
+            callTranscribeAudio(fileName, displayName, avatar);
         } else {
             console.error(`ffmpeg exited with code ${code}`);
         }
     });
 }
 
-function callTranscribeAudio(fileName, displayName) {
+function callTranscribeAudio(fileName, displayName, avatar) {
     const transcribePath = path.join(__dirname, 'transcribe.py');
     
     // run python script to transcribe the audio
     const pyShell = new PythonShell(transcribePath, {
         pythonPath: process.env.PYTHON_PATH,
-        args: [fileName, displayName]
+        args: [fileName, displayName, avatar]
     });
     
     // delete the audio file on ending transcription

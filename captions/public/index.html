@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Captions</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
     <h1>Live Captions</h1>
@@ -16,10 +17,27 @@
       const captionsDiv = document.getElementById("captions");
 
       // on getting captions, add them to the page
-      socket.on("caption", (text) => {
+      socket.on("caption", (data) => {
         const captionElement = document.createElement("div");
         captionElement.classList.add("caption");
-        captionElement.textContent = text;
+
+        const avatarImg = document.createElement("img");
+        avatarImg.src = data.avatar;
+        avatarImg.alt = `${data.speaker}'s avatar`;
+        avatarImg.classList.add("avatar");
+
+        const nameElement = document.createElement("span");
+        nameElement.classList.add("speaker-name");
+        nameElement.textContent = `${data.speaker}:`;
+
+        const textElement = document.createElement("span");
+        textElement.classList.add("caption-text");
+        textElement.textContent = data.text;
+
+        captionElement.appendChild(avatarImg);
+        captionElement.appendChild(nameElement);
+        captionElement.appendChild(textElement);
+
         captionsDiv.appendChild(captionElement);
 
         // auto scroll
