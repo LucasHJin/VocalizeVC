@@ -15,6 +15,7 @@ const path = require("path");
 const people = [];
 let connection = null;
 let generateSummary = false;
+let originalSummaryQuestion = null;
 
 module.exports = {
     name: "voiceStateUpdate",
@@ -88,10 +89,12 @@ module.exports = {
                     channel
                         .send({
                             content:
-                                "Would you like to generate a meeting summaryfor this call?",
+                                "Would you like to generate a meeting summary for this call?",
                             components: [row],
                         })
                         .then((sentMessage) => {
+                            originalSummaryQuestion = sentMessage;
+
                             const filter = (interaction) => {
                                 return interaction.member.permissions.has("Administrator"); // need admin perms
                             };
@@ -103,19 +106,53 @@ module.exports = {
                             });
 
                             collector.on("collect", (interaction) => {
+                                let updatedRow;
+
                                 if (interaction.customId === "yes_summary") {
                                     generateSummary = true;
                                     interaction.reply({
                                         content: "Summary generation enabled for this meeting.",
                                         ephemeral: true,
                                     });
+
+                                    updatedRow = new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId("yes_summary")
+                                            .setLabel("Yes (Selected)")
+                                            .setStyle(ButtonStyle.Success)
+                                            .setDisabled(true),
+                                        new ButtonBuilder()
+                                            .setCustomId("no_summary")
+                                            .setLabel("No")
+                                            .setStyle(ButtonStyle.Danger)
+                                            .setDisabled(true)
+                                    );
                                 } else if (interaction.customId === "no_summary") {
                                     generateSummary = false;
                                     interaction.reply({
                                         content: "Summary generation disabled for this meeting.",
                                         ephemeral: true,
                                     });
+
+                                    updatedRow = new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId("yes_summary")
+                                            .setLabel("Yes")
+                                            .setStyle(ButtonStyle.Success)
+                                            .setDisabled(true),
+                                        new ButtonBuilder()
+                                            .setCustomId("no_summary")
+                                            .setLabel("No (Selected)")
+                                            .setStyle(ButtonStyle.Danger)
+                                            .setDisabled(true)
+                                    );
                                 }
+
+                                sentMessage.edit({
+                                    content: "Would you like to generate a meeting summary for this call? (Selection made)",
+                                    components: [updatedRow],
+                                });
+
                                 collector.stop();
                             });
 
@@ -123,6 +160,23 @@ module.exports = {
                                 // if no choice chosen -> default to no summary
                                 if (collected.size === 0) {
                                     generateSummary = false;
+                                    let updatedRow = new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId("yes_summary")
+                                            .setLabel("Yes")
+                                            .setStyle(ButtonStyle.Success)
+                                            .setDisabled(true),
+                                        new ButtonBuilder()
+                                            .setCustomId("no_summary")
+                                            .setLabel("No")
+                                            .setStyle(ButtonStyle.Danger)
+                                            .setDisabled(true)
+                                    );
+
+                                    sentMessage.edit({
+                                        content: "Would you like to generate a meeting summary for this call? (No selection)",
+                                        components: [updatedRow],
+                                    });
                                 }
                             });
                         })
@@ -239,6 +293,24 @@ module.exports = {
                                         if (err)
                                             console.error("Error clearing transcription file:", err);
                                         else console.log("Transcription file cleared.");
+                                    });
+
+                                    let updatedRow = new ActionRowBuilder().addComponents(
+                                        new ButtonBuilder()
+                                            .setCustomId("yes_summary")
+                                            .setLabel("Yes")
+                                            .setStyle(ButtonStyle.Success)
+                                            .setDisabled(true),
+                                        new ButtonBuilder()
+                                            .setCustomId("no_summary")
+                                            .setLabel("No")
+                                            .setStyle(ButtonStyle.Danger)
+                                            .setDisabled(true)
+                                    );
+
+                                    originalSummaryQuestion.edit({
+                                        content: "Would you like to generate a meeting summary for this call? (No selection made)",
+                                        components: [updatedRow],
                                     });
                                 }
                                 generateSummary = false;
