@@ -1,10 +1,11 @@
 # VocalizeVC
-A discord bot built to aid meetings. 
+Vocalize VC is a discord bot, built to aid with meetings. It is perfect for community teams who have meetings/discussions over Discord, as well as anybody who simply wants a core feature missing from Discord's functionalities: captions.
 
 ## Functionalities
 1. Discord voice call captions. (shown in gui)
 2. Meeting topic summaries.
 3. Meeting activity summaries. (who joined, how long, what times)
 
-## Virtual env
-- Run source venv/bin/activate + node src/app.js
+## How to run locally
+- pip install -r requirements.txt
+- Run npm start
