@@ -1,8 +1,8 @@
-import OpenAI from "openai";
-import fs from "fs/promises";
+const OpenAI = require("openai");
+const fs = require("fs/promises");
 
 const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_KEY,
 });
 
 // roles:
@@ -11,6 +11,7 @@ const client = new OpenAI({
     // assistant -> model's response
 
 async function getSummary(transcript) {
+    console.log(process.env.OPENAI_API_KEY)
     try {
         const data = await fs.readFile(transcript, "utf-8");
     
@@ -20,7 +21,7 @@ async function getSummary(transcript) {
         Transcript:
         ${data}
         
-        Please summarize the overall conversation, including all key talking/discussion points, in a few sentences.
+        Please summarize the overall conversation, including all key talking/discussion points, in bullet points. Do it such that there is a main heading for each of the main talking points and then a couple jot notes for the key points of each main point.
         `;
     
         const response = await client.chat.completions.create({

@@ -1,7 +1,7 @@
+require('dotenv').config();
 const { EndBehaviorType } = require('@discordjs/voice');
 const prism = require('prism-media'); // to decode opus foramt
 const { spawn } = require('child_process'); // to run ffmpeg (multimedia framework to decode and ecode audio)
-require('dotenv').config();
 
 const { callTranscribeAudio } = require('./callTranscribeAudio');
 

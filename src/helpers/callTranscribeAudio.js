@@ -1,6 +1,6 @@
+require('dotenv').config();
 const { PythonShell } = require('python-shell');
 const path = require('path');
-require('dotenv').config();
 
 function callTranscribeAudio(audioBuffer, displayName, avatar) {
     const transcribePath = path.join(__dirname, 'transcribe.py');
