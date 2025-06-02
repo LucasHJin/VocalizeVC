@@ -249,7 +249,6 @@ module.exports = {
                 // if empty
                 if (oldState.channel.members.size === 0) {
                     console.log("Call ended");
-                    people.length = 0;
 
                     const transcriptionPath = path.join(
                         __dirname,
@@ -261,7 +260,20 @@ module.exports = {
                         process.env.CHANNEL_ID
                     );
 
+                    // call stats
+                    const statsMessage = people.map((p) => {
+                        const joinTimes = p.joinTime.map(t => `<t:${Math.floor(t.getTime() / 1000)}:T>`).join(", ");
+                        const leaveTimes = p.leaveTime.map(t => `<t:${Math.floor(t.getTime() / 1000)}:T>`).join(", ");
+                        return `*${p.name}*\n- Joined at: ${joinTimes || "N/A"}\n- Left at: ${leaveTimes || "N/A"}\n- Spoke for: ${p.speakingTime.toFixed(2)} seconds\n`;
+                    }).join("\n\n");
+
+                    people.length = 0;
+                    
                     if (channel) {
+                        // send call stats
+                        channel.send({
+                            content: `**Call Statistics:**\n${statsMessage}`
+                        });
                         // send transcription txt file
                         channel
                             .send({
