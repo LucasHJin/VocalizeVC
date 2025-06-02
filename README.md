@@ -1,4 +1,8 @@
-# VocalizeVC
+<h1 align="center">VocalizeVC</h1>
+<p align="center">
+    <img src="./static/VVC.png" alt="Logo" width="200"/>
+</p>
+
 VocalizeVC is a powerful Discord bot designed to improve meeting experiences in voice channels. It's perfect for community teams, clubs, or anyone who hosts discussions via Discord but finds it lacking one critical feature: **live captions**.
 
 In addition to real-time voice transcription, VocalizeVC generates meeting summaries and tracks participation to help ensure that everyone stays informed and engaged.
@@ -21,7 +25,7 @@ cd VocalizeVC
 ```
 pip install -r requirements.txt
 ```
-3. **Create a `.env` file in the root directory with the following environment variables**
+3. **Create a** `.env` **file in the root directory with the following environment variables**
 ```
 # For discord bot
 DISCORD_AUTH_TOKEN=your_bot_token_here
@@ -35,6 +39,6 @@ PYTHON_PATH=/full/path/to/python
 # For generating summaries
 OPENAI_KEY=your_openai_key_here
 ```
-4. **Run `npm start` in the terminal**
+4. **Run** `npm start` **in the terminal**
 5. **(Optional) Host the bot**
 Deploy on a cloud platform like Heroku or run it locally on a raspberry pi
