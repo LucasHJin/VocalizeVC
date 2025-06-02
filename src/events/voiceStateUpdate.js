@@ -9,8 +9,6 @@ const {
     ComponentType,
 } = require("discord.js");
 
-// still need to do activity summary
-
 const fs = require("fs");
 const path = require("path");
 
