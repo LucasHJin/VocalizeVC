@@ -4,6 +4,7 @@
 </p>
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 VocalizeVC is a powerful Discord bot designed to improve meeting experiences in voice channels. It's perfect for community teams, clubs, or anyone who hosts discussions via Discord but finds it lacking one critical feature: **live captions**.
 
 In addition to real-time voice transcription, VocalizeVC generates meeting summaries and tracks participation to help ensure that everyone stays informed and engaged.
