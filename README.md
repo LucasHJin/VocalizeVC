@@ -19,16 +19,16 @@ Tracks individual activity like when each person joined, left and how much they 
 
 ## Getting started (Running it locally)
 1. **Clone the repository**
-```
+```bash
 git clone https://github.com/yourusername/VocalizeVC.git
 cd VocalizeVC
 ```
 2. **Install Python dependencies**
-```
+```bash
 pip install -r requirements.txt
 ```
 3. **Create a** `.env` **file in the root directory with the following environment variables**
-```
+```bash
 # For discord bot
 DISCORD_AUTH_TOKEN=your_bot_token_here
 CLIENT_ID=your_client_id_here
