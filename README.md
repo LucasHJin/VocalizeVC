@@ -41,6 +41,6 @@ PYTHON_PATH=/full/path/to/python
 # For generating summaries
 OPENAI_KEY=your_openai_key_here
 ```
-4. **Run** `npm start` **in the terminal**
-5. **(Optional) Host the bot**
+5. **Run** `npm start` **in the terminal**
+6. **(Optional) Host the bot**
 Deploy on a cloud platform like Heroku or run it locally on a raspberry pi
